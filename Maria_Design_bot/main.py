@@ -13,27 +13,39 @@ def start_message(message):
 	calc_btn = types.KeyboardButton('Индивидуальный рассчет')
 	descr_btn = types.KeyboardButton('Описание услуг')
 	markup.row(calc_btn, descr_btn)
-	bot.send_photo(message.chat.id, photo=open('D:/Python/TG_bots/Maria_Design_bot/Maria_photo.jpg', 'rb'))
+	# bot.send_photo(message.chat.id, photo=open('D:/Python/TG_bots/Maria_Design_bot/Maria_photo.jpg', 'rb'))
 	bot.send_message(message.chat.id,f'Привет {message.from_user.first_name}!\n'
 									 	  f'Меня зовут Мария Бондаренкова\n'
 									 	  f'я - дизайнер интерьеров',
 											reply_markup=markup)
-	bot.register_next_step_handler(message, on_click)
+	# bot.register_next_step_handler(message, on_click)
 
+@bot.message_handler(content_types=['text'])
 def on_click(message):
-	if message.text == 'Описание услуг':
-		bot.send_message(message.chat.id,'тут фото')
-		# bot.register_next_step_handler(message, service_description)
+	if message.text.lower() == 'описание услуг':
+		service_description(message)
+		# bot.send_message(message.chat.id, 'Описание услуг')
+	elif message.text.lower() == 'о студии':
+		bot.register_next_step_handler(message, studio_info)
 	elif message.text == 'Индивидуальный рассчет':
 		bot.register_next_step_handler(message, personal_calc)
-	elif message.text == 'О студии':
-		bot.register_next_step_handler(message, studio_info)
+
 
 def service_description(message):
+	# bot.send_message(message.chat.id,'Описание услуг')
 	photo_dir = 'D:/Python/TG_bots/Maria_Design_bot/description_photo'
+	for file in os.listdir(photo_dir):
+		with open(os.path.join(photo_dir, file), 'rb') as photo:
+			bot.send_photo(message.chat.id,photo)
 
-	# for file in os.listdir(photo_dir):
-	# 	with open(os.path.join(photo_dir, file), 'r', encoding='utf-8') as photo:
-	# 		print(photo)
+def studio_info(message):
+	bot.send_message(message.chat.id, f'Уважаемый {message.from_user.first_name}!\n'
+									  f'здесь представлена информация\n'
+									  f'о студии'
+					 )
+
+def personal_calc(message):
+
+					 	)
 
 bot.infinity_polling()
