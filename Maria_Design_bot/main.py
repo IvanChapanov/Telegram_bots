@@ -18,7 +18,7 @@ def start_message(message):
 	# bot.send_photo(message.chat.id, photo=open('D:/Python/TG_bots/Maria_Design_bot/Maria_photo.jpg', 'rb'))
 	bot.send_message(message.chat.id,f'Привет {message.from_user.first_name}!\n'
 									 	  f'Меня зовут Мария Бондаренкова\n'
-									 	  f'я - дизайнер интерьеров',
+									 	  f'я - дизайнер интерьера',
 											reply_markup=markup)
 	# bot.register_next_step_handler(message, on_click)
 
@@ -28,9 +28,11 @@ def on_click(message):
 		service_description(message)
 		# bot.send_message(message.chat.id, 'Описание услуг')
 	elif message.text.lower() == 'о студии':
-		bot.register_next_step_handler(message, studio_info)
-	elif message.text == 'Индивидуальный рассчет':
-		bot.register_next_step_handler(message, personal_calc)
+		studio_info(message)
+		# bot.register_next_step_handler(message, studio_info)
+	elif message.text.lower() == 'индивидуальный рассчет':
+		personal_calc(message)
+		# bot.register_next_step_handler(message, personal_calc)
 
 
 def service_description(message):
@@ -47,6 +49,15 @@ def studio_info(message):
 					 )
 
 def personal_calc(message):
+	# bot.send_message(message.chat.id, 'Пожалуйста, выберите услуги')
+	markup = types.InlineKeyboardMarkup()
+	full_project = types.InlineKeyboardButton('Под ключ',callback_data='UnderKey')
+	project = types.InlineKeyboardButton('Дизайн-проект', callback_data='Design_project')
+	express = types.InlineKeyboardButton('Экспресс', callback_data='express_project')
+	project_about = types.InlineKeyboardButton('Подробнее чем отличаются услуги', callback_data='about_services')
+	markup.add(full_project, project,express, project_about)
+	bot.send_message(message.chat.id, f'Пожалуйста, выберите тип услуги',
+					 reply_markup=markup)
 	bot.send_message(message.chat.id,'Введите площадь помещения:')
 	bot.register_next_step_handler(message, write_square)
 
