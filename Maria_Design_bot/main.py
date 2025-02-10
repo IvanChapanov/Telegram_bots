@@ -1,5 +1,4 @@
 from curses.ascii import isdigit
-
 import telebot
 from telebot import types
 import os
@@ -53,19 +52,18 @@ def personal_calc(message):
 
 def write_square(message):
 	while True:
-		square = float(message.text)
+		square = message.text
 		try:
 			calc = float(square)*2500
 			period = int(0)
-			if 0 <= square <= 15:
+			if 0 <= float(square) <= 15:
 				period = 10
-			elif 16 <= square <= 50:
+			elif 16 <= float(square) <= 50:
 				period = 20
-			elif square > 50:
-				period = square * 0.5
+			elif float(square) > 50:
+				period = float(square) * 0.5
 			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
 							 					   f'{int(period)} рабочих дней на выполнение проекта')
-
 			break
 		except ValueError:
 			bot.send_message(message.chat.id,'Введите число, неверный формат значения площади')
