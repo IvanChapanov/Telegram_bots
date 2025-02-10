@@ -1,9 +1,12 @@
+from curses.ascii import isdigit
+
 import telebot
 from telebot import types
 import os
 from config import TOKEN
 
 bot = telebot.TeleBot(TOKEN)
+
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
@@ -45,7 +48,27 @@ def studio_info(message):
 					 )
 
 def personal_calc(message):
+	bot.send_message(message.chat.id,'Введите площадь помещения:')
+	bot.register_next_step_handler(message, write_square)
 
-					 	)
+def write_square(message):
+	while True:
+		square = float(message.text)
+		try:
+			calc = float(square)*2500
+			period = int(0)
+			if 0 <= square <= 15:
+				period = 10
+			elif 16 <= square <= 50:
+				period = 20
+			elif square > 50:
+				period = square * 0.5
+			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
+							 					   f'{int(period)} рабочих дней на выполнение проекта')
 
+			break
+		except ValueError:
+			bot.send_message(message.chat.id,'Введите число, неверный формат значения площади')
+			personal_calc(message)
+			break
 bot.infinity_polling()
