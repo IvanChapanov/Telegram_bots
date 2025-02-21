@@ -44,22 +44,22 @@ def service_description(message):
 			bot.send_photo(message.chat.id,photo)
 
 def studio_info(message):
-	markup = types.InlineKeyboardMarkup()
+	markup_info = types.InlineKeyboardMarkup()
 	pictures = types.InlineKeyboardButton(textwrap.fill(f'Интерьерные\n '
-														f'картины'), callback_data='Интерьерные картины')
-	about = types.InlineKeyboardButton('Обо мне', callback_data='Обо мне')
-	contacts = types.InlineKeyboardButton('Контакты', callback_data='Контакты')
-	markup.add(about, contacts,pictures)
+														f'картины'), callback_data='info_Интерьерные картины')
+	about = types.InlineKeyboardButton('Обо мне', callback_data='info_Обо мне')
+	contacts = types.InlineKeyboardButton('Контакты', callback_data='info_Контакты')
+	markup_info.add(about, contacts,pictures)
 	bot.send_message(message.chat.id, f'Познакомимся по-ближе',
-					 reply_markup=markup)
+					 reply_markup=markup_info)
 
-@bot.callback_query_handler(func=lambda call:True)
+@bot.callback_query_handler(func=lambda call: call.data.startswith('info_'))
 def info(call):
-	if call.data == 'Интерьерные картины':
+	if call.data == 'info_Интерьерные картины':
 		bot.send_message(call.from_user.id, f'Здесь будет инфо про картины')
-	elif call.data == 'Обо мне':
+	elif call.data == 'info_Обо мне':
 		bot.send_message(call.from_user.id, f'Здесь будет информация Обо мне')
-	elif call.data == 'Контакты':
+	elif call.data == 'info_Контакты':
 		bot.send_message(call.from_user.id, f'Здесь будет контактная информация')
 
 
