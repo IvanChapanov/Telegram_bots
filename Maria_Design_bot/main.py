@@ -16,12 +16,11 @@ def start_message(message):
 	calc_btn = types.KeyboardButton('Индивидуальный рассчет')
 	descr_btn = types.KeyboardButton('Описание услуг')
 	markup.row(calc_btn, descr_btn)
-	# bot.send_photo(message.chat.id, photo=open('D:/Python/TG_bots/Maria_Design_bot/Maria_photo.jpg', 'rb'))
-	bot.send_message(message.chat.id,f'Привет {message.from_user.first_name}!\n'
-									 	  f'Меня зовут Мария Бондаренкова\n'
-									 	  f'я - дизайнер интерьера',
-											reply_markup=markup)
-	# bot.register_next_step_handler(message, on_click)
+	with open ('greeting.txt', 'r', encoding='utf-8') as file:
+		lines = file.readlines()
+	first_message = f'Привет {message.from_user.first_name}!\n\n' + ''.join(lines)
+	bot.send_photo(message.chat.id, photo=open('Maria_main_photo.jpg', 'rb'), caption=first_message,
+				   reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
 def on_click(message):
