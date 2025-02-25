@@ -2,11 +2,12 @@ from curses.ascii import isdigit
 import telebot
 from telebot import types
 import os
-import textwrap
+from pathlib import Path
 from config import TOKEN
 
 bot = telebot.TeleBot(TOKEN)
 property_type = None
+project_path = Path(__file__).parent
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
@@ -16,10 +17,11 @@ def start_message(message):
 	calc_btn = types.KeyboardButton('Индивидуальный рассчет')
 	descr_btn = types.KeyboardButton('Описание услуг')
 	markup.row(calc_btn, descr_btn)
-	with open ('greeting.txt', 'r', encoding='utf-8') as file:
+	main_photo = Path(f'{project_path}/Main_photo/Maria_main_photo.jpg')
+	with open ('Text/Greeting.txt', 'r', encoding='utf-8') as file:
 		lines = file.readlines()
 	first_message = f'Привет {message.from_user.first_name}!\n\n' + ''.join(lines)
-	bot.send_photo(message.chat.id, photo=open('Maria_main_photo.jpg', 'rb'), caption=first_message,
+	bot.send_photo(message.chat.id, photo=open(main_photo, 'rb'), caption=first_message,
 				   reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
@@ -36,16 +38,16 @@ def on_click(message):
 
 
 def service_description(message):
-	# bot.send_message(message.chat.id,'Описание услуг')
-	photo_dir = 'D:/Python/TG_bots/Maria_Design_bot/description_photo'
-	for file in os.listdir(photo_dir):
-		with open(os.path.join(photo_dir, file), 'rb') as photo:
+	# project_path = Path(__file__).parent
+	descr_photo_dir = Path(f'{project_path}/description_photo')
+	for file in os.listdir(descr_photo_dir):
+		with open(os.path.join(descr_photo_dir, file), 'rb') as photo:
 			bot.send_photo(message.chat.id,photo)
 
 def studio_info(message):
 	markup_info = types.InlineKeyboardMarkup()
-	pictures = types.InlineKeyboardButton(textwrap.fill(f'Интерьерные\n '
-														f'картины'), callback_data='info_Интерьерные картины')
+	pictures = types.InlineKeyboardButton(text = f'Картины'
+														,callback_data='info_Интерьерные картины')
 	about = types.InlineKeyboardButton('Обо мне', callback_data='info_Обо мне')
 	contacts = types.InlineKeyboardButton('Контакты', callback_data='info_Контакты')
 	markup_info.add(about, contacts,pictures)
