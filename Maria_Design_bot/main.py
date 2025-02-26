@@ -2,20 +2,63 @@ from curses.ascii import isdigit
 import telebot
 from telebot import types
 import os
+import sys
+import datetime
 from pathlib import Path
+import mysql.connector
+from mysql.connector import errorcode
 from config import TOKEN
 
 bot = telebot.TeleBot(TOKEN)
 property_type = None
+square = None
 project_path = Path(__file__).parent
+
+user_data = {}
+
+class User:
+
+	def __init__(self, first_name):
+		self.user_id = 0
+		self.first_name = first_name
+		self.user_name = ''
+		self.square = float
+		self.date = datetime.datetime
+
+try:
+	db = mysql.connector.connect(
+      host='localhost',
+      user='root',
+      passwd='Mgc3461422939.',
+      port='3306',
+      database='dbo'
+    )
+except mysql.connector.Error as err:
+	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+		print("Something is wrong with your user name or password")
+		sys.exit()
+	elif err.errno == errorcode.ER_BAD_DB_ERROR:
+		print("Database does not exist")
+		sys.exit()
+	else:
+		print(err)
+		sys.exit()
+
+cursor = db.cursor()
+# cursor.execute(f'CREATE TABLE users (user_id INT,'
+# 			   						f'first_name varchar(100),'
+# 			   						f'user_name varchar(100),'
+# 									f'square float,'
+# 									f'datetime datetime)'
+# 			   )
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-	markup = types.ReplyKeyboardMarkup()
-	info_btn = types.KeyboardButton('О студии')
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+	info_btn = types.KeyboardButton('🖌️ О студии')
 	markup.row(info_btn)
-	calc_btn = types.KeyboardButton('Индивидуальный рассчет')
-	descr_btn = types.KeyboardButton('Описание услуг')
+	calc_btn = types.KeyboardButton('💸 Индивидуальный рассчет')
+	descr_btn = types.KeyboardButton('📋 Описание услуг')
 	markup.row(calc_btn, descr_btn)
 	main_photo = Path(f'{project_path}/Main_photo/Maria_main_photo.jpg')
 	with open ('Text/Greeting.txt', 'r', encoding='utf-8') as file:
@@ -26,13 +69,13 @@ def start_message(message):
 
 @bot.message_handler(content_types=['text'])
 def on_click(message):
-	if message.text.lower() == 'описание услуг':
+	if message.text.lower() == '📋 описание услуг':
 		service_description(message)
 		# bot.send_message(message.chat.id, 'Описание услуг')
-	elif message.text.lower() == 'о студии':
+	elif message.text.lower() == '🖌️ о студии':
 		studio_info(message)
 		# bot.register_next_step_handler(message, studio_info)
-	elif message.text.lower() == 'индивидуальный рассчет':
+	elif message.text.lower() == '💸 индивидуальный рассчет':
 		personal_calc(message)
 		# bot.register_next_step_handler(message, personal_calc)
 
@@ -46,11 +89,13 @@ def service_description(message):
 
 def studio_info(message):
 	markup_info = types.InlineKeyboardMarkup()
-	pictures = types.InlineKeyboardButton(text = f'Картины'
+	pictures = types.InlineKeyboardButton(text = f'🖼️ Интерьерные картины'
 														,callback_data='info_Интерьерные картины')
-	about = types.InlineKeyboardButton('Обо мне', callback_data='info_Обо мне')
-	contacts = types.InlineKeyboardButton('Контакты', callback_data='info_Контакты')
-	markup_info.add(about, contacts,pictures)
+	about = types.InlineKeyboardButton('💁 Обо мне', callback_data='info_Обо мне')
+	contacts = types.InlineKeyboardButton('📞 Контакты', callback_data='info_Контакты')
+	# markup_info.add(about, contacts,pictures)
+	markup_info.row(about, contacts)
+	markup_info.row(pictures)
 	bot.send_message(message.chat.id, f'Познакомимся по-ближе',
 					 reply_markup=markup_info)
 
@@ -67,11 +112,14 @@ def info(call):
 def personal_calc(message):
 	# bot.send_message(message.chat.id, 'Пожалуйста, выберите услуги')
 	markup = types.InlineKeyboardMarkup()
-	full_project = types.InlineKeyboardButton('Под ключ',callback_data='Дизайн-проект под ключ')
-	project = types.InlineKeyboardButton('Дизайн-проект', callback_data='Дизайн-проект')
-	express = types.InlineKeyboardButton('Экспресс', callback_data='Экспресс проект')
+	full_project = types.InlineKeyboardButton('🗝️ Под ключ',callback_data='Дизайн-проект под ключ')
+	project = types.InlineKeyboardButton('💥Дизайн-проект', callback_data='Дизайн-проект')
+	express = types.InlineKeyboardButton('🚅 Экспресс', callback_data='Экспресс проект')
 	project_about = types.InlineKeyboardButton('Подробнее чем отличаются услуги', callback_data='about_services')
-	markup.add(full_project, project,express, project_about)
+	# markup.add(full_project, project,express, project_about)
+	markup.row(full_project)
+	markup.row(project,express)
+	markup.row(project_about)
 	bot.send_message(message.chat.id, f'Пожалуйста, выберите тип услуги',
 					 reply_markup=markup)
 
@@ -92,7 +140,9 @@ def square_input(message):
 	bot.register_next_step_handler(message, write_square)
 
 def write_square(message):
+	user_data[message.from_user.id] = User(message.from_user.first_name)
 	while True:
+		global square
 		square = message.text
 		price = float()
 		if property_type == 'Дизайн-проект под ключ':
@@ -110,9 +160,25 @@ def write_square(message):
 				period = float(square) * 1
 			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
 							 					   f'{int(period)} рабочих дней на выполнение проекта')
+
+			client(message)
 			break
 		except ValueError:
-			bot.send_message(message.chat.id,'Введите число, неверный формат значения площади')
+			bot.send_message(message.chat.id,'Неверный формат значения площади, введите число')
 			personal_calc(message)
 			break
+
+def client(message):
+	user_data[message.from_user.id].user_name = message.from_user.username
+	user_data[message.from_user.id].square = square
+	user_data[message.from_user.id].date = datetime.datetime.now()
+	user_id = message.from_user.id
+	user = user_data[user_id]
+	sql = 'INSERT INTO users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
+	val = (user.user_id, user.first_name, user.user_name, user.square, user.date)
+	cursor.execute(sql, val)
+	db.commit()
+
+
+
 bot.infinity_polling()
