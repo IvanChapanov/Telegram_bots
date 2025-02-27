@@ -8,6 +8,7 @@ from pathlib import Path
 import mysql.connector
 from mysql.connector import errorcode
 from config import TOKEN
+import json
 
 bot = telebot.TeleBot(TOKEN)
 property_type = None
@@ -25,13 +26,19 @@ class User:
 		self.square = float
 		self.date = datetime.datetime
 
+def load_dbconfig(config_file='dbconfig.json'):
+	with open(config_file) as f:
+		return json.load(f)
+
+config = load_dbconfig()
+db_config = config['database']
 try:
 	db = mysql.connector.connect(
-      host='localhost',
-      user='root',
-      passwd='Mgc3461422939.',
-      port='3306',
-      database='dbo'
+		host=db_config['host'],
+		port=db_config['port'],
+		user=db_config['user'],
+		password=db_config['password'],
+		database=db_config['dbname']
     )
 except mysql.connector.Error as err:
 	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
