@@ -52,6 +52,43 @@ cursor = db.cursor()
 # 									f'datetime datetime)'
 # 			   )
 
+def fetch_data_from_db(message):
+
+	user_data[message.from_user.id].user_name = message.from_user.username
+	user_data[message.from_user.id].square = square
+	user_data[message.from_user.id].date = datetime.datetime.now()
+	user_iter = iter(user_data.keys())
+	user_id = next(user_iter)
+	user = user_data[user_id]
+	sql = 'INSERT INTO users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
+	val = (user_id, user.first_name, user.user_name, user.square, user.date)
+	cursor.execute(sql, val)
+	db.commit()
+	user_data.clear()
+	cursor.execute('SELECT * FROM v_users_request')
+	rows = cursor.fetchall()
+	column_names = [i[0] for i in cursor.description]
+	cursor.close()
+	return column_names, rows
+
+
+def format_table(column_names, rows):
+	# Форматируем таблицу
+	table = ""
+
+	# Добавляем шапку
+	table += " | ".join(column_names) + "\n"
+	table += "-" * (len(column_names) * 18) + "\n"  # Разделитель на основе длины шапки
+
+	# Добавляем строки данных
+	for row in rows:
+		table += " | ".join(map(str, row)) + "\n"
+	return table
+
+def send_table(chat_id, table):
+	bot.send_message(chat_id, f"<pre>{table}</pre>", parse_mode='HTML')
+
+
 @bot.message_handler(commands=['start'])
 def start_message(message):
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -161,23 +198,17 @@ def write_square(message):
 			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
 							 					   f'{int(period)} рабочих дней на выполнение проекта')
 
-			client(message)
+			column_names, rows = fetch_data_from_db(message)
+			table = format_table(column_names, rows)
+			send_table(message.chat.id, table)
+
 			break
 		except ValueError:
 			bot.send_message(message.chat.id,'Неверный формат значения площади, введите число')
 			personal_calc(message)
 			break
 
-def client(message):
-	user_data[message.from_user.id].user_name = message.from_user.username
-	user_data[message.from_user.id].square = square
-	user_data[message.from_user.id].date = datetime.datetime.now()
-	user_id = message.from_user.id
-	user = user_data[user_id]
-	sql = 'INSERT INTO users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
-	val = (user.user_id, user.first_name, user.user_name, user.square, user.date)
-	cursor.execute(sql, val)
-	db.commit()
+
 
 
 
