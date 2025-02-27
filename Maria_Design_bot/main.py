@@ -68,7 +68,6 @@ def fetch_data_from_db(message):
 	cursor.execute('SELECT * FROM v_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
-	cursor.close()
 	return column_names, rows
 
 
