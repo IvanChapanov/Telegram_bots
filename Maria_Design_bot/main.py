@@ -59,7 +59,7 @@ cursor = db.cursor()
 # 									f'datetime datetime)'
 # 			   )
 
-def fetch_data_from_db(message):
+def insert_user_data(message):
 
 	user_data[message.from_user.id].user_name = message.from_user.username
 	user_data[message.from_user.id].square = square
@@ -72,11 +72,6 @@ def fetch_data_from_db(message):
 	cursor.execute(sql, val)
 	db.commit()
 	user_data.clear()
-	cursor.execute('SELECT * FROM v_users_request')
-	rows = cursor.fetchall()
-	column_names = [i[0] for i in cursor.description]
-	return column_names, rows
-
 
 def format_table(column_names, rows):
 	# Форматируем таблицу
@@ -204,9 +199,8 @@ def write_square(message):
 			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
 							 					   f'{int(period)} рабочих дней на выполнение проекта')
 
-			column_names, rows = fetch_data_from_db(message)
-			table = format_table(column_names, rows)
-			send_table(message.chat.id, table)
+			insert_user_data(message)
+
 
 			break
 		except ValueError:
