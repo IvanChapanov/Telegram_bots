@@ -134,7 +134,7 @@ def studio_info(message):
 	# markup_info.add(about, contacts,pictures)
 	markup_info.row(about, contacts)
 	markup_info.row(pictures)
-	bot.send_message(message.chat.id, f'Познакомимся по-ближе',
+	bot.send_message(message.chat.id, f'Давайте познакомимся поближе 🤗',
 					 reply_markup=markup_info)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('info_'))
@@ -142,9 +142,15 @@ def info(call):
 	if call.data == 'info_Интерьерные картины':
 		bot.send_message(call.from_user.id, f'Здесь будет инфо про картины')
 	elif call.data == 'info_Обо мне':
-		bot.send_message(call.from_user.id, f'Здесь будет информация Обо мне')
+		with open('Text/about_me.txt', 'r', encoding='utf-8') as file:
+			lines = file.readlines()
+		contacts_info = ''.join(lines)
+		bot.send_message(call.from_user.id, contacts_info)
 	elif call.data == 'info_Контакты':
-		bot.send_message(call.from_user.id, f'Здесь будет контактная информация')
+		with open('Text/contacts.txt', 'r', encoding='utf-8') as file:
+			lines = file.readlines()
+		contacts_info = f'Контактная информация\n\n' + ''.join(lines)
+		bot.send_message(call.from_user.id, contacts_info)
 
 
 def personal_calc(message):
