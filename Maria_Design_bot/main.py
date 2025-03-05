@@ -9,9 +9,11 @@ import mysql.connector
 from mysql.connector import errorcode
 from config import TOKEN
 import json
+from typing import cast
 
 bot = telebot.TeleBot(TOKEN)
 property_type = None
+folder_path = None
 square = None
 project_path = Path(__file__).parent
 
@@ -109,17 +111,13 @@ def start_message(message):
 def on_click(message):
 	if message.text.lower() == '📋 описание услуг':
 		service_description(message)
-		# bot.send_message(message.chat.id, 'Описание услуг')
 	elif message.text.lower() == '🖌️ о студии':
 		studio_info(message)
-		# bot.register_next_step_handler(message, studio_info)
 	elif message.text.lower() == '💸 индивидуальный рассчет':
 		personal_calc(message)
-		# bot.register_next_step_handler(message, personal_calc)
 
 
 def service_description(message):
-	# project_path = Path(__file__).parent
 	descr_photo_dir = Path(f'{project_path}/description_photo')
 	for file in os.listdir(descr_photo_dir):
 		with open(os.path.join(descr_photo_dir, file), 'rb') as photo:
@@ -131,9 +129,10 @@ def studio_info(message):
 														,callback_data='info_Интерьерные картины')
 	about = types.InlineKeyboardButton('💁 Обо мне', callback_data='info_Обо мне')
 	contacts = types.InlineKeyboardButton('📞 Контакты', callback_data='info_Контакты')
-	# markup_info.add(about, contacts,pictures)
+	portfolio = types.InlineKeyboardButton('📂 Портфолио', callback_data='info_Портфолио')
 	markup_info.row(about, contacts)
 	markup_info.row(pictures)
+	markup_info.row(portfolio)
 	bot.send_message(message.chat.id, f'Давайте познакомимся поближе 🤗',
 					 reply_markup=markup_info)
 
@@ -151,32 +150,69 @@ def info(call):
 			lines = file.readlines()
 		contacts_info = f'Контактная информация\n\n' + ''.join(lines)
 		bot.send_message(call.from_user.id, contacts_info)
+	elif call.data == 'info_Портфолио':
+		portfolio(call)
 
+@bot.callback_query_handler(func=lambda call: call.data == 'info_Портфолио')
+def portfolio(call):
+	markup = types.InlineKeyboardMarkup()
+	bedroom = types.InlineKeyboardButton('🗝️ Спальни', callback_data='portfolio_Спальни')
+	living_room = types.InlineKeyboardButton('💥Кухни-гостиные', callback_data='portfolio_Гостиные')
+	child_room = types.InlineKeyboardButton('🚅 Детские', callback_data='portfolio_Детские')
+	bathroom = types.InlineKeyboardButton('Ванные комнаты и санузлы', callback_data='portfolio_Санузлы')
+	markup.row(bedroom,living_room)
+	markup.row(child_room)
+	markup.row(bathroom)
+	bot.send_message(call.message.chat.id, f'Пожалуйста, выберите тип помещения для просмотра',
+					 reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call:call.data.startswith('portfolio_'))
+def callback_portfolio(call):
+	global folder_path
+	folder_path = project_path  # Укажите путь к вашей папке с изображениями
+	media = []
+
+	if call.data[10:] == 'Спальни':
+		folder_path = Path(f'{project_path}/Portfolio/Bedroom')
+	elif call.data[10:] == 'Гостиные':
+		folder_path = Path(f'{project_path}/Portfolio/LivingRoom')
+	elif call.data[10:] == 'Санузлы':
+		folder_path = Path(f'{project_path}/Portfolio/BathRoom')
+	elif call.data[10:] == 'Детские':
+		folder_path = Path(f'{project_path}/Portfolio/ChildrenRoom')
+	# Проходим по всем файлам в папке
+	for filename in os.listdir(folder_path):
+		if filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):  # фильтруем только изображения
+			file_path = os.path.join(folder_path, filename)
+			photo_file = cast(str,file_path)
+			media.append(telebot.types.InputMediaPhoto(open(photo_file, 'rb')))
+			print (file_path)
+	if media:
+		bot.send_media_group(call.message.chat.id, media)
+	else:
+		bot.send_message(call.message.chat.id, "Нет изображений для отправки.")
 
 def personal_calc(message):
-	# bot.send_message(message.chat.id, 'Пожалуйста, выберите услуги')
 	markup = types.InlineKeyboardMarkup()
-	full_project = types.InlineKeyboardButton('🗝️ Под ключ',callback_data='Дизайн-проект под ключ')
-	project = types.InlineKeyboardButton('💥Дизайн-проект', callback_data='Дизайн-проект')
-	express = types.InlineKeyboardButton('🚅 Экспресс', callback_data='Экспресс проект')
-	project_about = types.InlineKeyboardButton('Подробнее чем отличаются услуги', callback_data='about_services')
-	# markup.add(full_project, project,express, project_about)
+	full_project = types.InlineKeyboardButton('🗝️ Под ключ',callback_data='project_Дизайн-проект под ключ')
+	project = types.InlineKeyboardButton('💥Дизайн-проект', callback_data='project_Дизайн-проект')
+	express = types.InlineKeyboardButton('🚅 Экспресс', callback_data='project_Экспресс проект')
+	project_about = types.InlineKeyboardButton('Подробнее чем отличаются услуги', callback_data='project_about_services')
 	markup.row(full_project)
 	markup.row(project,express)
 	markup.row(project_about)
 	bot.send_message(message.chat.id, f'Пожалуйста, выберите тип услуги',
 					 reply_markup=markup)
 
-@bot.callback_query_handler(func=lambda call:True)
+@bot.callback_query_handler(func=lambda call: call.data.startswith('project_'))
 def callback_property_type(call):
 	global property_type
-	property_type = call.data
+	property_type = call.data[8:]
 	if property_type == 'about_services':
 		service_description(call.message)
 		personal_calc(call.message)
 	else:
 		bot.send_message(call.from_user.id, f'Вы выбрали: {property_type}')
-		# bot.register_next_step_handler(call.message, square_input)
 		square_input(call.message)
 
 def square_input(message):
@@ -204,18 +240,10 @@ def write_square(message):
 				period = float(square) * 1
 			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
 							 					   f'{int(period)} рабочих дней на выполнение проекта')
-
 			insert_user_data(message)
-
-
 			break
 		except ValueError:
 			bot.send_message(message.chat.id,'Неверный формат значения площади, введите число')
 			personal_calc(message)
 			break
-
-
-
-
-
 bot.infinity_polling()
