@@ -157,9 +157,9 @@ def info(call):
 def portfolio(call):
 	markup = types.InlineKeyboardMarkup()
 	bedroom = types.InlineKeyboardButton('🗝️ Спальни', callback_data='portfolio_Спальни')
-	living_room = types.InlineKeyboardButton('💥Кухни-гостиные', callback_data='portfolio_Гостиные')
+	living_room = types.InlineKeyboardButton('💥Кухни-гостиные', callback_data='portfolio_Кухни-гостиные')
 	child_room = types.InlineKeyboardButton('🚅 Детские', callback_data='portfolio_Детские')
-	bathroom = types.InlineKeyboardButton('Ванные комнаты и санузлы', callback_data='portfolio_Санузлы')
+	bathroom = types.InlineKeyboardButton('Ванные комнаты и санузлы', callback_data='portfolio_Ванные комнаты и санузлы')
 	markup.row(bedroom,living_room)
 	markup.row(child_room)
 	markup.row(bathroom)
@@ -174,9 +174,9 @@ def callback_portfolio(call):
 
 	if call.data[10:] == 'Спальни':
 		folder_path = Path(f'{project_path}/Portfolio/Bedroom')
-	elif call.data[10:] == 'Гостиные':
+	elif call.data[10:] == 'Кухни-гостиные':
 		folder_path = Path(f'{project_path}/Portfolio/LivingRoom')
-	elif call.data[10:] == 'Санузлы':
+	elif call.data[10:] == 'Ванные комнаты и санузлы':
 		folder_path = Path(f'{project_path}/Portfolio/BathRoom')
 	elif call.data[10:] == 'Детские':
 		folder_path = Path(f'{project_path}/Portfolio/ChildrenRoom')
@@ -186,8 +186,8 @@ def callback_portfolio(call):
 			file_path = os.path.join(folder_path, filename)
 			photo_file = cast(str,file_path)
 			media.append(telebot.types.InputMediaPhoto(open(photo_file, 'rb')))
-			print (file_path)
 	if media:
+		bot.send_message(call.message.chat.id, f'Портфолио - {call.data[10:]}')
 		bot.send_media_group(call.message.chat.id, media)
 	else:
 		bot.send_message(call.message.chat.id, "Нет изображений для отправки.")
