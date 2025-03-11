@@ -139,7 +139,19 @@ def studio_info(message):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('info_'))
 def info(call):
 	if call.data == 'info_Интерьерные картины':
-		bot.send_message(call.from_user.id, f'Здесь будет инфо про картины')
+		global folder_path
+		folder_path = Path(f'{project_path}/Portfolio/Pictures')
+		pictures = []
+		for filename in os.listdir(folder_path):
+			if filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):  # фильтруем только изображения
+				file_path = os.path.join(folder_path, filename)
+				photo_file = cast(str, file_path)
+				pictures.append(telebot.types.InputMediaPhoto(open(photo_file, 'rb')))
+		with open('Text/Pictures.txt', 'r', encoding='utf-8') as file:
+			lines = file.readlines()
+		picture_message = ''.join(lines)
+		bot.send_message(call.from_user.id, picture_message)
+		bot.send_media_group(call.message.chat.id, pictures)
 	elif call.data == 'info_Обо мне':
 		with open('Text/about_me.txt', 'r', encoding='utf-8') as file:
 			lines = file.readlines()
@@ -156,10 +168,10 @@ def info(call):
 @bot.callback_query_handler(func=lambda call: call.data == 'info_Портфолио')
 def portfolio(call):
 	markup = types.InlineKeyboardMarkup()
-	bedroom = types.InlineKeyboardButton('🗝️ Спальни', callback_data='portfolio_Спальни')
-	living_room = types.InlineKeyboardButton('💥Кухни-гостиные', callback_data='portfolio_Кухни-гостиные')
-	child_room = types.InlineKeyboardButton('🚅 Детские', callback_data='portfolio_Детские')
-	bathroom = types.InlineKeyboardButton('Ванные комнаты и санузлы', callback_data='portfolio_Ванные комнаты и санузлы')
+	bedroom = types.InlineKeyboardButton('🛏️️ Спальни', callback_data='portfolio_Спальни')
+	living_room = types.InlineKeyboardButton('🛋️ Кухни-гостиные', callback_data='portfolio_Кухни-гостиные')
+	child_room = types.InlineKeyboardButton('🤸 Детские', callback_data='portfolio_Детские')
+	bathroom = types.InlineKeyboardButton('🛁 Ванные комнаты и санузлы', callback_data='portfolio_Ванные комнаты и санузлы')
 	markup.row(bedroom,living_room)
 	markup.row(child_room)
 	markup.row(bathroom)
