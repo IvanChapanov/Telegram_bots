@@ -49,15 +49,21 @@ except mysql.connector.Error as err:
 
 cursor = db.cursor()
 
-def fetch_data_from_db():
-	cursor.execute('SELECT * FROM v_users_request')
+def fetch_new_data_from_db():
+	cursor.execute('SELECT * FROM v_new_users_request')
+	rows = cursor.fetchall()
+	column_names = [i[0] for i in cursor.description]
+	return column_names, rows
+
+def fetch_all_data_from_db():
+	cursor.execute('SELECT * FROM v_all_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
 	return column_names, rows
 
 def format_table(column_names, rows):
 	# Форматируем таблицу
-	table = ""
+	table = ''
 
 	# Добавляем шапку
 	table += " | ".join(column_names) + "\n"
@@ -68,28 +74,46 @@ def format_table(column_names, rows):
 		table += " | ".join(map(str, row)) + "\n"
 	return table
 
+def user_status_update():
+	cursor.execute('UPDATE dbo.users SET viewed = 1 WHERE viewed IS NULL')
+	db.commit()
+
 def send_table(chat_id, table):
 	bot.send_message(chat_id, f"<pre>{table}</pre>", parse_mode='HTML')
 
-def main(message):
-	column_names, rows = fetch_data_from_db()
+def get_new_data(message):
+	column_names, rows = fetch_new_data_from_db()
+	table = format_table(column_names, rows)
+	send_table(message.chat.id, table)
+
+def get_all_data(message):
+	column_names, rows = fetch_all_data_from_db()
 	table = format_table(column_names, rows)
 	send_table(message.chat.id, table)
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-	check_user_btn = types.KeyboardButton('Вывести список пользователей')
-	markup.row(check_user_btn)
+	check_new_user_btn = types.KeyboardButton('🆕 Вывести список новых пользователей')
+	table_read_btn = types.KeyboardButton('✔️ Отметить новых как просмотренные')
+	check_all_user_btn = types.KeyboardButton('👩🏻‍💻 Вывести список всех пользователей')
+	markup.row(check_new_user_btn)
+	markup.row(table_read_btn)
+	markup.row(check_all_user_btn)
 	bot.send_message(message.chat.id, f'Список пользователей выполнивших индивидуальный рассчет',
 					 reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
 def on_click(message):
-	if message.text.lower() == 'вывести список пользователей':
-		main(message)
+	if message.text.lower() == '🆕 вывести список новых пользователей':
+		get_new_data(message)
 		# bot.send_message(message.chat.id, 'Описание услуг')
+	elif message.text.lower() == '✔️ отметить новых как просмотренные':
+		user_status_update()
+		bot.send_message(message.chat.id, 'Все запросы пользователей отмечены как просмотренные')
+	elif message.text.lower() == '👩🏻‍💻 вывести список всех пользователей':
+		get_all_data(message)
 	else:
-		bot.send_message(message.chat.id, f'Нажми на кнопку, чтобы получить список')
+		bot.send_message(message.chat.id, f'Выбери действие из меню')
 
 bot.infinity_polling()
