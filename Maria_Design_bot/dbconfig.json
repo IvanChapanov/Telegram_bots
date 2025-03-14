@@ -1,9 +1,9 @@
 {
     "database": {
-        "host": "localhost",
-        "port": 3306,
-        "user": "root",
-        "password": "Mgc3461422939.",
-        "dbname": "dbo"
+        "host": "89.23.115.129",
+        "port": 5432,
+        "user": "gen_user",
+        "password": "Aqxw|3I?+mi02w",
+        "dbname": "Maria_design_DB"
     }
 }

@@ -10,6 +10,8 @@ from mysql.connector import errorcode
 from config import TOKEN
 import json
 from typing import cast
+import psycopg2
+from psycopg2 import sql
 
 bot = telebot.TeleBot(TOKEN)
 property_type = None
@@ -34,26 +36,23 @@ def load_dbconfig(config_file='dbconfig.json'):
 
 config = load_dbconfig()
 db_config = config['database']
-try:
-	db = mysql.connector.connect(
-		host=db_config['host'],
-		port=db_config['port'],
-		user=db_config['user'],
-		password=db_config['password'],
-		database=db_config['dbname']
-    )
-except mysql.connector.Error as err:
-	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-		print("Something is wrong with your user name or password")
-		sys.exit()
-	elif err.errno == errorcode.ER_BAD_DB_ERROR:
-		print("Database does not exist")
-		sys.exit()
-	else:
-		print(err)
-		sys.exit()
 
-cursor = db.cursor()
+def check_db_connection():
+	try:
+		conn = psycopg2.connect(
+			dbname=db_config['dbname'],
+			user=db_config['user'],
+			password=db_config['password'],
+			host=db_config['host'],
+			port=db_config['port']
+		)
+		conn.close()
+		return True
+	except Exception as e:
+		print(f"Ошибка подключения к базе данных: {e}")
+		return False
+
+# cursor = conn.cursor
 # cursor.execute(f'CREATE TABLE users (user_id INT,'
 # 			   						f'first_name varchar(100),'
 # 			   						f'user_name varchar(100),'
@@ -62,17 +61,24 @@ cursor = db.cursor()
 # 			   )
 
 def insert_user_data(message):
-
+	conn = psycopg2.connect(
+		dbname=db_config['dbname'],
+		user=db_config['user'],
+		password=db_config['password'],
+		host=db_config['host'],
+		port=db_config['port']
+	)
+	cursor = conn.cursor()
 	user_data[message.from_user.id].user_name = message.from_user.username
 	user_data[message.from_user.id].square = square
 	user_data[message.from_user.id].date = datetime.datetime.now()
 	user_iter = iter(user_data.keys())
 	user_id = next(user_iter)
 	user = user_data[user_id]
-	sql = 'INSERT INTO users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
+	sql = 'INSERT INTO dbo.users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
 	val = (user_id, user.first_name, user.user_name, user.square, user.date)
 	cursor.execute(sql, val)
-	db.commit()
+	conn.commit()
 	user_data.clear()
 
 def format_table(column_names, rows):
