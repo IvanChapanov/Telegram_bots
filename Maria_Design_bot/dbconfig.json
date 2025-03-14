@@ -1,9 +1,0 @@
-{
-    "database": {
-        "host": "89.23.115.129",
-        "port": 5432,
-        "user": "gen_user",
-        "password": "Aqxw|3I?+mi02w",
-        "dbname": "Maria_design_DB"
-    }
-}
