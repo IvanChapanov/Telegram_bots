@@ -1,12 +1,10 @@
 from curses.ascii import isdigit
 import telebot
 from telebot import types
-import sys
 import datetime
-import mysql.connector
-from mysql.connector import errorcode
 from config import TOKEN
 import json
+import psycopg2
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -28,35 +26,46 @@ def load_dbconfig(config_file='dbconfig.json'):
 
 config = load_dbconfig()
 db_config = config['database']
-try:
-	db = mysql.connector.connect(
-		host=db_config['host'],
-		port=db_config['port'],
-		user=db_config['user'],
-		password=db_config['password'],
-		database=db_config['dbname']
-    )
-except mysql.connector.Error as err:
-	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-		print("Something is wrong with your user name or password")
-		sys.exit()
-	elif err.errno == errorcode.ER_BAD_DB_ERROR:
-		print("Database does not exist")
-		sys.exit()
-	else:
-		print(err)
-		sys.exit()
+def check_db_connection():
+	try:
+		conn = psycopg2.connect(
+			dbname=db_config['dbname'],
+			user=db_config['user'],
+			password=db_config['password'],
+			host=db_config['host'],
+			port=db_config['port']
+		)
+		conn.close()
+		return True
+	except Exception as e:
+		print(f"Ошибка подключения к базе данных: {e}")
+		return False
 
-cursor = db.cursor()
 first_message_id = None
 
 def fetch_new_data_from_db():
+	conn = psycopg2.connect(
+		dbname=db_config['dbname'],
+		user=db_config['user'],
+		password=db_config['password'],
+		host=db_config['host'],
+		port=db_config['port']
+	)
+	cursor = conn.cursor()
 	cursor.execute('SELECT * FROM v_new_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
 	return column_names, rows
 
 def fetch_all_data_from_db():
+	conn = psycopg2.connect(
+		dbname=db_config['dbname'],
+		user=db_config['user'],
+		password=db_config['password'],
+		host=db_config['host'],
+		port=db_config['port']
+	)
+	cursor = conn.cursor()
 	cursor.execute('SELECT * FROM v_all_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
@@ -76,8 +85,16 @@ def format_table(column_names, rows):
 	return table
 
 def user_status_update():
+	conn = psycopg2.connect(
+		dbname=db_config['dbname'],
+		user=db_config['user'],
+		password=db_config['password'],
+		host=db_config['host'],
+		port=db_config['port']
+	)
+	cursor = conn.cursor()
 	cursor.execute('UPDATE dbo.users SET viewed = 1 WHERE viewed IS NULL')
-	db.commit()
+	conn.commit()
 
 def send_table(chat_id, table):
 	bot.send_message(chat_id, f"<pre>{table}</pre>", parse_mode='HTML')
