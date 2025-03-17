@@ -249,6 +249,7 @@ def write_square(message):
 			price = 1800
 		try:
 			calc = float(square) * price
+			calc_result = '{0:,}'.format(calc).replace(',', ' ')
 			period = int(0)
 			if 0 <= float(square) <= 15:
 				period = 14
@@ -259,7 +260,7 @@ def write_square(message):
 			message_calc = (
 						f'{property_type}\n\n'
 						''.join(lines) + '\n'
-					   f'💸 Общая стоимость услуг - {str('{0:,}'.format(calc).replace(',', ' '))} рублей\n'
+					   f'💸 Общая стоимость услуг - {str(calc_result)} рублей\n'
 					   f'📅 Срок выполнения - {int(period)} рабочих дней'
 				)
 			bot.send_message(message.chat.id, message_calc)
