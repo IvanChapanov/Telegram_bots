@@ -52,7 +52,7 @@ def fetch_new_data_from_db():
 		port=db_config['port']
 	)
 	cursor = conn.cursor()
-	cursor.execute('SELECT * FROM v_new_users_request')
+	cursor.execute('SELECT * FROM dbo.v_new_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
 	return column_names, rows
@@ -66,7 +66,7 @@ def fetch_all_data_from_db():
 		port=db_config['port']
 	)
 	cursor = conn.cursor()
-	cursor.execute('SELECT * FROM v_all_users_request')
+	cursor.execute('SELECT * FROM dbo.v_all_users_request')
 	rows = cursor.fetchall()
 	column_names = [i[0] for i in cursor.description]
 	return column_names, rows
