@@ -261,8 +261,7 @@ def write_square(message):
 						f'{property_type}\n\n'
 						f'{''.join(lines)}\n'
 					    f'💸 Общая стоимость услуг - {str(calc_result)} рублей\n'
-					    f'📅 Срок выполнения - {int(period)} рабочих дней'
-				)
+					    f'📅 Срок выполнения - {int(period)} рабочих дней')
 			bot.send_message(message.chat.id, message_calc)
 			insert_user_data(message)
 			break
