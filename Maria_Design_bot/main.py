@@ -257,9 +257,9 @@ def write_square(message):
 			with open(f'Text/{property_type}.txt', 'r', encoding='utf-8') as file:
 				lines = file.readlines()
 			message_calc = (
-						f'{property_type}\n\n'+
-						''.join(lines) + '\n' +
-					   f'💸 Общая стоимость услуг - {str('{0:,}'.format(calc).replace(',', ' '))} рублей\n' +
+						f'{property_type}\n\n'
+						''.join(lines) + '\n'
+					   f'💸 Общая стоимость услуг - {str('{0:,}'.format(calc).replace(',', ' '))} рублей\n'
 					   f'📅 Срок выполнения - {int(period)} рабочих дней'
 				)
 			bot.send_message(message.chat.id, message_calc)
