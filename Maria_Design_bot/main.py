@@ -8,7 +8,6 @@ from config import TOKEN
 import json
 from typing import cast
 import psycopg2
-import fontstyle
 from psycopg2 import sql
 
 bot = telebot.TeleBot(TOKEN)
