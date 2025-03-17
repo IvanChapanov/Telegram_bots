@@ -259,7 +259,7 @@ def write_square(message):
 				lines = file.readlines()
 			message_calc = (
 						f'{property_type}\n\n'
-						f'{''.join(lines)}\n'
+						f'{"".join(lines)}\n'
 					    f'💸 Общая стоимость услуг - {str(calc_result)} рублей\n'
 					    f'📅 Срок выполнения - {int(period)} рабочих дней')
 			bot.send_message(message.chat.id, message_calc)
