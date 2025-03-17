@@ -2,15 +2,13 @@ from curses.ascii import isdigit
 import telebot
 from telebot import types
 import os
-import sys
 import datetime
 from pathlib import Path
-import mysql.connector
-from mysql.connector import errorcode
 from config import TOKEN
 import json
 from typing import cast
 import psycopg2
+import fontstyle
 from psycopg2 import sql
 
 bot = telebot.TeleBot(TOKEN)
@@ -256,8 +254,13 @@ def write_square(message):
 				period = 14
 			elif float(square) > 15:
 				period = float(square) * 1
-			bot.send_message(message.chat.id, f'{str(calc)} рублей\n'
-							 					   f'{int(period)} рабочих дней на выполнение проекта')
+			with open(f'Text/{property_type}.txt', 'r', encoding='utf-8') as file:
+				lines = file.readlines()
+			message_calc = ( f'{property_type}\n\n'+
+						''.join(lines) + '\n' +
+					   f'💸 Общая стоимость услуг - {str('{0:,}'.format(calc).replace(',', ' '))} рублей\n' +
+					   f'📅 Срок выполнения - {int(period)} рабочих дней')
+			bot.send_message(message.chat.id, message_calc)
 			insert_user_data(message)
 			break
 		except ValueError:
