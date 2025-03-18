@@ -150,7 +150,7 @@ def info(call):
 				file_path = os.path.join(folder_path, filename)
 				photo_file = cast(str, file_path)
 				pictures.append(telebot.types.InputMediaPhoto(open(photo_file, 'rb')))
-		with open('Text/Pictures.txt', 'r', encoding='utf-8') as file:
+		with open('Text/pictures.txt', 'r', encoding='utf-8') as file:
 			lines = file.readlines()
 		picture_message = ''.join(lines)
 		bot.send_message(call.from_user.id, picture_message)
@@ -188,7 +188,7 @@ def callback_portfolio(call):
 	media = []
 
 	if call.data[10:] == 'Спальни':
-		folder_path = Path(f'{project_path}/Portfolio/Bedroom')
+		folder_path = Path(f'{project_path}/Portfolio/BedRoom')
 	elif call.data[10:] == 'Кухни-гостиные':
 		folder_path = Path(f'{project_path}/Portfolio/LivingRoom')
 	elif call.data[10:] == 'Ванные комнаты и санузлы':
