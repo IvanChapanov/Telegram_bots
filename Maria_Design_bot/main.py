@@ -132,7 +132,7 @@ def studio_info(message):
 														,callback_data='info_Интерьерные картины')
 	about = types.InlineKeyboardButton('💁 Обо мне', callback_data='info_Обо мне')
 	contacts = types.InlineKeyboardButton('📞 Контакты', callback_data='info_Контакты')
-	portfolio = types.InlineKeyboardButton('📂 Портфолио', callback_data='info_Портфолио')
+	portfolio = types.InlineKeyboardButton('📂 Портфолио проектов', callback_data='info_Портфолио')
 	markup_info.row(about, contacts)
 	markup_info.row(pictures)
 	markup_info.row(portfolio)
