@@ -156,7 +156,7 @@ def insert_contact(message):
 	phone_number = contact.phone_number
 	first_name = contact.first_name
 	last_name = contact.last_name if contact.last_name else ""
-	sql_query = 'INSERT INTO dbo.contacts (phone_number, first_name, last_name, date) VALUES (%s, %s, %s, %s)'
+	sql_query = "INSERT INTO dbo.contacts (phone_number, first_name, last_name, date_add (date, INTERVAL '2 hours')) VALUES (%s, %s, %s, %s)"
 	val = (phone_number, first_name, last_name, date)
 	cursor.execute(sql_query, val)
 	conn.commit()
