@@ -10,6 +10,7 @@ from config import TOKEN
 import json
 from typing import cast
 import psycopg2
+from zoneinfo import ZoneInfo
 from psycopg2 import sql
 
 bot = telebot.TeleBot(TOKEN)
@@ -18,6 +19,11 @@ property_type = None
 folder_path = None
 square = None
 project_path = Path(__file__).parent
+tz_ekb = ZoneInfo('Asia/Yekaterinburg')
+date = datetime.datetime.now(tz_ekb)
+
+print(tz_ekb)
+print(date)
 
 user_data = {}
 contact_state = {}
@@ -142,8 +148,8 @@ def ask_for_contact(message):
 						 ,reply_markup=keyboard)
 
 def insert_contact(message):
-	date = datetime.datetime.now()
-
+	# Установка часового пояса Екатеринбурга (UTC+5)
+	global date
 	conn = psycopg2.connect(
 		dbname=db_config['dbname'],
 		user=db_config['user'],
@@ -156,8 +162,9 @@ def insert_contact(message):
 	phone_number = contact.phone_number
 	first_name = contact.first_name
 	last_name = contact.last_name if contact.last_name else ""
-	sql_query = "INSERT INTO dbo.contacts (phone_number, first_name, last_name, date_add (date, INTERVAL '2 hours')) VALUES (%s, %s, %s, %s)"
+	sql_query = "INSERT INTO dbo.contacts (phone_number, first_name, last_name, date) VALUES (%s, %s, %s, %s)"
 	val = (phone_number, first_name, last_name, date)
+	print(date)
 	cursor.execute(sql_query, val)
 	conn.commit()
 
