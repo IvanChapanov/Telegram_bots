@@ -1,4 +1,6 @@
 from curses.ascii import isdigit
+from types import NoneType
+
 import telebot
 from telebot import types
 import os
@@ -11,13 +13,14 @@ import psycopg2
 from psycopg2 import sql
 
 bot = telebot.TeleBot(TOKEN)
+target_user_id = 178945372
 property_type = None
 folder_path = None
 square = None
 project_path = Path(__file__).parent
 
 user_data = {}
-
+contact_state = {}
 class User:
 
 	def __init__(self, first_name):
@@ -94,8 +97,6 @@ def format_table(column_names, rows):
 def send_table(chat_id, table):
 	bot.send_message(chat_id, f"<pre>{table}</pre>", parse_mode='HTML')
 
-
-@bot.message_handler(commands=['start'])
 def start_message(message):
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 	info_btn = types.KeyboardButton('🖌️ О студии')
@@ -110,6 +111,74 @@ def start_message(message):
 	bot.send_photo(message.chat.id, photo=open(main_photo, 'rb'), caption=first_message,
 				   reply_markup=markup)
 
+def menu_message(message):
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+	info_btn = types.KeyboardButton('🖌️ О студии')
+	markup.row(info_btn)
+	calc_btn = types.KeyboardButton('💸 Индивидуальный рассчет')
+	descr_btn = types.KeyboardButton('📋 Описание услуг')
+	markup.row(calc_btn, descr_btn)
+	bot.send_message(message.chat.id, 'Главное меню',
+	 					 reply_markup=markup)
+
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+	start_message(message)
+
+def ask_for_contact(message):
+	# Создаем кнопку для запроса контакта
+	keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+	button_contact = types.KeyboardButton(text="💬 Поделиться контактом", request_contact=True)
+	button_menu = types.KeyboardButton(text="🏠 Вернуться в меню")
+	keyboard.add(button_contact,button_menu)
+	message_text = (f'Если вас заинтересовало предложение,\n'
+					f'поделитесь контактом и мы свяжемся с вами')
+	# Отправляем сообщение с кнопкой
+	if isinstance(message,types.Message):
+		bot.send_message(message.chat.id, message_text
+						 ,reply_markup=keyboard)
+	elif isinstance(message,types.CallbackQuery):
+		bot.send_message(message.message.chat.id, message_text
+						 ,reply_markup=keyboard)
+
+def insert_contact(message):
+	date = datetime.datetime.now()
+
+	conn = psycopg2.connect(
+		dbname=db_config['dbname'],
+		user=db_config['user'],
+		password=db_config['password'],
+		host=db_config['host'],
+		port=db_config['port']
+		)
+	cursor = conn.cursor()
+	contact = message.contact
+	phone_number = contact.phone_number
+	first_name = contact.first_name
+	last_name = contact.last_name if contact.last_name else ""
+	sql_query = 'INSERT INTO dbo.contacts (phone_number, first_name, last_name, date) VALUES (%s, %s, %s, %s)'
+	val = (phone_number, first_name, last_name, date)
+	cursor.execute(sql_query, val)
+	conn.commit()
+
+
+	# print(f'{phone_number},{type(phone_number)}')
+	# except Exception as e:
+	# 	pass
+
+@bot.message_handler(content_types=['contact'])
+def handle_contact(message):
+	# print (type(message.contact.user_id))
+	while message.contact is not None:
+		try:
+			insert_contact(message)
+			bot.send_message(message.chat.id, f'Спасибо, мы свяжемся с Вами в ближайшее время🤗',)
+			menu_message(message)
+			message.contact = None
+			break
+		except Exception as e:
+			pass
+
 @bot.message_handler(content_types=['text'])
 def on_click(message):
 	if message.text.lower() == '📋 описание услуг':
@@ -118,7 +187,8 @@ def on_click(message):
 		studio_info(message)
 	elif message.text.lower() == '💸 индивидуальный рассчет':
 		personal_calc(message)
-
+	elif message.text.lower() == '🏠 вернуться в меню':
+		menu_message(message)
 
 def service_description(message):
 	descr_photo_dir = Path(f'{project_path}/description_photo')
@@ -155,6 +225,10 @@ def info(call):
 		picture_message = ''.join(lines)
 		bot.send_message(call.from_user.id, picture_message)
 		bot.send_media_group(call.message.chat.id, pictures)
+		ask_for_contact(call.message)
+		handle_contact(call.message)
+
+		# bot.register_next_step_handler(call.message, menu_message)
 	elif call.data == 'info_Обо мне':
 		with open('Text/about_me.txt', 'r', encoding='utf-8') as file:
 			lines = file.readlines()
@@ -263,6 +337,11 @@ def write_square(message):
 					    f'📅 Срок выполнения - {int(period)} рабочих дней')
 			bot.send_message(message.chat.id, message_calc)
 			insert_user_data(message)
+			ask_for_contact(message)
+			handle_contact(message)
+			# message.contact = None
+			# bot.register_next_step_handler(message, menu_message)
+			# bot.register_next_step_handler(message, menu_message)
 			break
 		except ValueError:
 			bot.send_message(message.chat.id,'Неверный формат значения площади, введите число')
