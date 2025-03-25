@@ -19,11 +19,7 @@ property_type = None
 folder_path = None
 square = None
 project_path = Path(__file__).parent
-tz_ekb = ZoneInfo('Asia/Yekaterinburg')
-date = datetime.datetime.now(tz_ekb)
 
-print(tz_ekb)
-print(date)
 
 user_data = {}
 contact_state = {}
@@ -149,7 +145,8 @@ def ask_for_contact(message):
 
 def insert_contact(message):
 	# Установка часового пояса Екатеринбурга (UTC+5)
-	global date
+	tz_ekb = ZoneInfo('Asia/Yekaterinburg')
+	date = datetime.datetime.now(tz_ekb)
 	conn = psycopg2.connect(
 		dbname=db_config['dbname'],
 		user=db_config['user'],
@@ -164,7 +161,7 @@ def insert_contact(message):
 	last_name = contact.last_name if contact.last_name else ""
 	sql_query = "INSERT INTO dbo.contacts (phone_number, first_name, last_name, date) VALUES (%s, %s, %s, %s)"
 	val = (phone_number, first_name, last_name, date)
-	print(date)
+
 	cursor.execute(sql_query, val)
 	conn.commit()
 
