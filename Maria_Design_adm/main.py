@@ -2,7 +2,7 @@ from curses.ascii import isdigit
 import telebot
 from telebot import types
 import datetime
-from config import TOKEN
+from config import TOKEN, CHAT_ID
 import json
 import psycopg2
 import schedule
@@ -10,7 +10,7 @@ import time
 from threading import Thread
 
 bot = telebot.TeleBot(TOKEN)
-CHAT_ID = '178945372'
+# CHAT_ID = '178945372'
 
 user_data = {}
 
