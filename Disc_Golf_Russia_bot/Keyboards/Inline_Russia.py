@@ -1,6 +1,12 @@
 import aiogram
+import sys
+import os
+from pathlib import Path
 from aiogram import types
-from Disc_Golf_Russia_bot.Regions.Regions import Region,regions
+# from Disc_Golf_Russia_bot.Regions.Regions import Region,regions
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Regions.Regions import *
+
 Region.load_regions(regions)
 region = None
 
