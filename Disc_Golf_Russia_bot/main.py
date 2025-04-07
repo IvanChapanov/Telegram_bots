@@ -48,9 +48,13 @@ async def cmd_start(message: types.Message):
 @dp.message(MainFilter())
 async def on_click(message: types.Message):
     if message.text.lower() == 'что такое диск-гольф':
-        await message.answer('Здесь будет краткое описание что такое диск-гольф')
+        with open('Texts/WhatIs.txt', 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        await message.answer(f'\n\n' + ''.join(lines))
     elif message.text.lower() == 'правила диск-гольфа':
-        await message.answer('Здесь будет краткое описание правил диск-гольфа')
+        with open('Texts/Rules.txt', 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        await message.answer(f'\n\n' + ''.join(lines))
     elif message.text.lower() == 'диск-гольф в россии':
         await message.answer(f'Здесь будет кратко о диск-гольфе в РФ\n'
                              f'появляются внутренние кнопки полезной инфы: ссылка на канал, сайт,\n' 
@@ -58,7 +62,9 @@ async def on_click(message: types.Message):
                              reply_markup=get_inline_keyboard_Russia()
                              )
     elif message.text.lower() == 'контакты':
-        await message.answer('Здесь будет контактная информация и текст для партнеров')
+        with open('Texts/Contacts.txt', 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        await message.answer(f'\n\n' + ''.join(lines))
 
 # Обработка нажатий на кнопки
 @dp.callback_query(lambda c: c.data.startswith('russia_'))
@@ -92,11 +98,17 @@ async def regions_menu(message: types.Message, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('region_'))
 async def handle_callback_(callback_query: types.CallbackQuery, state: FSMContext):
     if callback_query.data == 'region_Где поиграть, трассы':
-        await callback_query.message.answer('Сообщение с адресами, и геолокацией')
+        await send_location(callback_query.message)
     elif callback_query.data == 'region_Схемы трасс':
         await callback_query.message.answer('Сообщение с файлами схемы трасс')
     elif callback_query.data == 'region_Канал Telegram':
         await callback_query.message.answer('Сообщение с файлами схемы трасс')
+
+async def send_location(message: types.Message):
+    latitude = 56.773543   # широта (Уктус)
+    longitude = 60.649179  # долгота (Уктус)
+    await message.answer('Диск-гольф парк Уктус')
+    await bot.send_location(chat_id=message.chat.id, latitude=latitude, longitude=longitude)
 
 
 # Запуск процесса поллинга новых апдейтов
