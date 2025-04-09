@@ -5,12 +5,13 @@ from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter, BaseFilter
 from aiogram.fsm.state import State, StatesGroup
-from Keyboards.Inline_Russia import get_inline_keyboard_Russia, get_inline_keyboard_shops, get_inline_keyboard_regions
+from Keyboards.Inline_Russia import get_inline_keyboard_cources,get_inline_keyboard_region_parks,get_inline_keyboard_Russia, get_inline_keyboard_shops, get_inline_keyboard_regions
 from Regions.Regions import Region,regions
 import asyncio
 import logging
 import os
 import datetime
+from datetime import datetime
 from pathlib import Path
 from config import TOKEN
 
@@ -20,9 +21,24 @@ bot = aiogram.Bot(TOKEN)
 # Диспетчер
 dp = aiogram.Dispatcher()
 
+project_path = Path(__file__).parent
 Region.load_regions(regions)
 region = None
+park = None
 project_path = Path(__file__).parent
+city_list = str(f'Екатеринбург\n'
+            f'Москва\n'
+            f'Санкт-Петербург\n'
+            f'Нижний Новгород\n'
+            f'Белгород\n'
+            f'Набережные Челны\n'
+            f'Псков\n'
+            f'Великие Луки\n'
+            f'Рыбинск\n'
+            f'Тольятти\n'
+            f'Калининград\n')
+
+
 
 class MainFilter(BaseFilter):
     async def __call__(self, message: types.Message) -> bool:
@@ -30,6 +46,7 @@ class MainFilter(BaseFilter):
 
 class Form(StatesGroup):
     waiting_region_code = State()
+
 
 # Хэндлер на команду /start
 @dp.message(Command('start'))
@@ -75,22 +92,30 @@ async def handle_callback_(callback_query: types.CallbackQuery, state: FSMContex
     elif callback_query.data == 'russia_regions':
         choose_region = f'Выберите регион, отправьте код интересующего Вас региона'
         region_code = str(Path(f'{project_path}/Regions/Region_list.jpeg'))
-        await callback_query.message.answer_photo(photo=types.FSInputFile(region_code), caption=choose_region)
+        await callback_query.message.answer(f'{city_list}\n\n'
+                                            f'В этих городах из списка можно поиграть в диск-гольф\n'
+                                            f'Введите название интересующего вас города')
         await state.set_state(Form.waiting_region_code)
-
+    elif callback_query.data == 'russia_competitions':
+        schedule_message = str('Расписание турниров на текущий сезон')
+        schedule = str(Path(f'{project_path}/Расписание/{datetime.now().year}.jpg'))
+        print(schedule)
+        await callback_query.message.answer_photo(photo=types.FSInputFile(schedule), caption=schedule_message)
         # Устанавливаем состояние ожидания кода региона
         # await state.set_state(Form.waiting_region_code)
 
 @dp.message(Form.waiting_region_code)
 async def regions_menu(message: types.Message, state: FSMContext):
     try:
-        if message.text.strip() == "66":  # Сравниваем строку со строкой
-            current_region = Region.get(message.text)
-            keyboard = get_inline_keyboard_regions(message.text)
-            await message.answer(f'Вы в меню региона {current_region.name}',reply_markup=keyboard)
+        if message.text.lower().strip():  # Сравниваем строку со строкой
+            global region
+            region = message.text.lower()
+            current_region = Region.get(region)
+            keyboard = get_inline_keyboard_regions(message.text.lower())
+            await message.answer(f'Вы в меню региона {current_region.fullname}',reply_markup=keyboard)
             await state.clear()  # Сбрасываем состояние
         else:
-            await message.answer("Пожалуйста, введите правильный код региона (66)")
+            await message.answer("В этом городе пока нет диск-гольф парка")
     except Exception as e:
         print(f"Ошибка: {e}")
         await message.answer("Произошла ошибка при обработке запроса")
@@ -98,18 +123,51 @@ async def regions_menu(message: types.Message, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('region_'))
 async def handle_callback_(callback_query: types.CallbackQuery, state: FSMContext):
     if callback_query.data == 'region_Где поиграть, трассы':
-        await send_location(callback_query.message)
-    elif callback_query.data == 'region_Схемы трасс':
-        await callback_query.message.answer('Сообщение с файлами схемы трасс')
-    elif callback_query.data == 'region_Канал Telegram':
-        await callback_query.message.answer('Сообщение с файлами схемы трасс')
+        keyboard = get_inline_keyboard_region_parks(region)
+        await callback_query.message.answer(f'Выберите парк',reply_markup=keyboard)
+    elif callback_query.data == 'region_Расписание турниров':
 
-async def send_location(message: types.Message):
-    latitude = 56.773543   # широта (Уктус)
-    longitude = 60.649179  # долгота (Уктус)
-    await message.answer('Диск-гольф парк Уктус')
-    await bot.send_location(chat_id=message.chat.id, latitude=latitude, longitude=longitude)
+        schedule_message = str('Расписание турниров на текущий сезон')
+        schedule = str(Path(f'{project_path}/Regions/{region.lower()}/Расписание/{datetime.now().year}.jpg'))
+        print(schedule)
+        await callback_query.message.answer_photo(photo=types.FSInputFile(schedule), caption=schedule_message)
 
+
+@dp.callback_query(lambda c: c.data.startswith('park_'))
+async def handle_callback_(callback_query: types.CallbackQuery):
+     global park
+     park = callback_query.data[5:]
+     keyboard = get_inline_keyboard_cources(region, callback_query.data[5:])
+     await callback_query.message.answer(f'Парк {callback_query.data[5:]}',reply_markup=keyboard)
+
+async def send_location(message: types.Message, parkname, latitude, longitude):
+    global park
+    current_region = Region.get(region)
+    lat = latitude   # широта
+    long = longitude  # долгота
+    await message.answer(f'Диск-гольф парк {park}\n' 
+                         f'Адрес: {parkname['address']}\n\n'
+                         f'Нажмите на геолокацию ниже')
+    await bot.send_location(chat_id=message.chat.id, latitude=lat, longitude=long)
+
+@dp.callback_query(lambda c: c.data.startswith('cources_'))
+async def handle_callback_(callback_query: types.CallbackQuery):
+    global park, region
+    if callback_query.data == 'cources_Геолокация парка':
+         current_region = Region.get(region)
+         if park in current_region.park:
+             park_dict = current_region.park[park]
+             lat = park_dict['latitude']  # Получаем значение latitude
+             long = park_dict['longitude']  # Получаем значение latitude
+             await send_location(callback_query.message,park_dict,lat,long)
+         else:
+             await callback_query.message.answer(f"Парк {park} не найден в регионе.")
+    elif callback_query.data == 'cources_Схемы лэйаутов':
+        folder_path = str(Path(f'{project_path}/Regions/{region.lower()}/{park}'))
+        for file in os.listdir(folder_path):
+            full_file_path = str(Path(f'{folder_path}/{file}'))
+            file_name_without_extension = os.path.splitext(os.path.basename(full_file_path))[0]
+            await callback_query.message.answer_photo(photo=types.FSInputFile(full_file_path), caption=file_name_without_extension)
 
 # Запуск процесса поллинга новых апдейтов
 async def main():
