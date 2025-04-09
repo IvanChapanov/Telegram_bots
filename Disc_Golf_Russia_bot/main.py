@@ -146,7 +146,7 @@ async def send_location(message: types.Message, parkname, latitude, longitude):
     lat = latitude   # широта
     long = longitude  # долгота
     await message.answer(f'Диск-гольф парк {park}\n' 
-                         f'Адрес: {parkname['address']}\n\n'
+                         f'Адрес: {parkname["address"]}\n\n'
                          f'Нажмите на геолокацию ниже')
     await bot.send_location(chat_id=message.chat.id, latitude=lat, longitude=long)
 
