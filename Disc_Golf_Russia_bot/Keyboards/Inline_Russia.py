@@ -38,7 +38,7 @@ def get_inline_keyboard_regions(name):
     current_region = Region.get(name)
     inline_kb_list = [
         [types.InlineKeyboardButton(text=f'{current_region.shortname} - Где поиграть, трассы', callback_data='region_Где поиграть, трассы')],
-        [types.InlineKeyboardButton(text=f'{current_region.shortname} - Расписание турниров', callback_data='region_Расписание турниров')],
+        [types.InlineKeyboardButton(text=f'{current_region.shortname} - Расписание турниров',url = 'https://rdga.ru/calendar', callback_data='region_Расписание турниров')],
         [types.InlineKeyboardButton(text=f'{current_region.shortname} - Канал Telegram', url = current_region.region_channel,callback_data='region_Канал Telegram')],
     ]
     return types.InlineKeyboardMarkup(inline_keyboard=inline_kb_list)

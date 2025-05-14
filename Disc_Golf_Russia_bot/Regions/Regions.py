@@ -71,7 +71,7 @@ regions = {
                     }
                 }
             },
-            'Загородный Клуб "ДАЧА"': {
+            'Загородный Клуб ДАЧА': {
                 'address': 'Ленинградская область, Приозерский район, до 69 км старого Приозерского шоссе, далее по указателям',
                 'metrix_link': 'https://discgolfmetrix.com/course/23673',
                 'latitude': 60.67233777,
@@ -124,7 +124,7 @@ regions = {
         'park': {
             'Званское': {
                 'address': 'Псковская область, Псковский район, Деревня 1-е Подборовье, 1/1',
-                'metrix_link': 'https://discgolfmetrix.com/course/27296',
+                'metrix_link': 'https://discgolfmetrix.com/course/24803',
                 'latitude': 57.891129,
                 'longitude': 28.635400,
                 'cources':{
@@ -143,7 +143,7 @@ regions = {
         'shortname': 'ВЛ',
         'region_channel': 'https://t.me/DiscGolf_VL',
         'park': {
-            'Званское': {
+            'Петровский': {
                 'address': 'Псковская область, г.Великие Луки, парк Петровский',
                 'metrix_link': 'https://discgolfmetrix.com/course/27296',
                 'latitude': 56.343723,
@@ -300,7 +300,6 @@ regions = {
                     'Для любителей TS14':{
                         'name': 'Для любителей TS14'
                     }
-
                 }
             },
             'Дворец Пионеров': {
@@ -309,7 +308,7 @@ regions = {
                 'latitude': 55.705646,
                 'longitude': 37.554387,
                 'cources':{
-                    'Турнирная схема 2025 TS18':{
+                    'Pro Tour 2025':{
                         'name': 'Турнирная схема 2025 TS18'
                     },
                     'Для начинающих 2022 F9':{

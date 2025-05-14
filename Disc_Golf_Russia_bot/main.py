@@ -58,9 +58,11 @@ async def cmd_start(message: types.Message):
         ],
         resize_keyboard=True
     )
-
-    await message.answer('Здесь будет приветственное сообщение',
-        reply_markup=start_keyboard)
+    with open('Texts/Greeting.txt', 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+    await message.answer(f'\n\n' + ''.join(lines),reply_markup=start_keyboard)
+    # await message.answer('Здесь будет приветственное сообщение',
+    #     reply_markup=start_keyboard)
 
 @dp.message(MainFilter())
 async def on_click(message: types.Message):
@@ -99,10 +101,13 @@ async def handle_callback_(callback_query: types.CallbackQuery, state: FSMContex
     elif callback_query.data == 'russia_competitions':
         schedule_message = str('Расписание турниров на текущий сезон')
         schedule = str(Path(f'{project_path}/Расписание/{datetime.now().year}.jpg'))
-        print(schedule)
         await callback_query.message.answer_photo(photo=types.FSInputFile(schedule), caption=schedule_message)
         # Устанавливаем состояние ожидания кода региона
         # await state.set_state(Form.waiting_region_code)
+    elif callback_query.data == 'russia_partners':
+        with open('Texts/Partnership.txt', 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        await callback_query.message.answer(f'\n\n' + ''.join(lines))
 
 @dp.message(Form.waiting_region_code)
 async def regions_menu(message: types.Message, state: FSMContext):
@@ -164,7 +169,10 @@ async def handle_callback_(callback_query: types.CallbackQuery):
              await callback_query.message.answer(f"Парк {park} не найден в регионе.")
     elif callback_query.data == 'cources_Схемы лэйаутов':
         folder_path = str(Path(f'{project_path}/Regions/{region.lower()}/{park}'))
-        for file in os.listdir(folder_path):
+        files = os.listdir(folder_path)
+        if not files:
+            await callback_query.message.answer(f'Схемы в разработке')
+        for file in files:
             full_file_path = str(Path(f'{folder_path}/{file}'))
             file_name_without_extension = os.path.splitext(os.path.basename(full_file_path))[0]
             await callback_query.message.answer_photo(photo=types.FSInputFile(full_file_path), caption=file_name_without_extension)
