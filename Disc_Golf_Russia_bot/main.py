@@ -170,13 +170,15 @@ async def handle_callback_(callback_query: types.CallbackQuery):
     elif callback_query.data == 'cources_Схемы лэйаутов':
         folder_path = str(Path(f'{project_path}/Regions/{region.lower()}/{park}'))
         files = os.listdir(folder_path)
-        if not files:
+        try:
+            if not files:
+                await callback_query.message.answer(f'Схемы в разработке')
+            for file in files:
+                full_file_path = str(Path(f'{folder_path}/{file}'))
+                file_name_without_extension = os.path.splitext(os.path.basename(full_file_path))[0]
+                await callback_query.message.answer_photo(photo=types.FSInputFile(full_file_path), caption=file_name_without_extension)
+        except FileNotFoundError:
             await callback_query.message.answer(f'Схемы в разработке')
-        for file in files:
-            full_file_path = str(Path(f'{folder_path}/{file}'))
-            file_name_without_extension = os.path.splitext(os.path.basename(full_file_path))[0]
-            await callback_query.message.answer_photo(photo=types.FSInputFile(full_file_path), caption=file_name_without_extension)
-
 # Запуск процесса поллинга новых апдейтов
 async def main():
     await dp.start_polling(bot)
