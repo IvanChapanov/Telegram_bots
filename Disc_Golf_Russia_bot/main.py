@@ -123,7 +123,7 @@ async def regions_menu(message: types.Message, state: FSMContext):
             await message.answer("В этом городе пока нет диск-гольф парка")
     except Exception as e:
         print(f"Ошибка: {e}")
-        await message.answer("Произошла ошибка при обработке запроса")
+        await message.answer("К сожалению в вашем городе еще нет диск-гольф парка")
 
 @dp.callback_query(lambda c: c.data.startswith('region_'))
 async def handle_callback_(callback_query: types.CallbackQuery, state: FSMContext):
