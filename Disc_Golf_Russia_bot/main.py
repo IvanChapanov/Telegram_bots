@@ -168,9 +168,9 @@ async def handle_callback_(callback_query: types.CallbackQuery):
          else:
              await callback_query.message.answer(f"Парк {park} не найден в регионе.")
     elif callback_query.data == 'cources_Схемы лэйаутов':
-        folder_path = str(Path(f'{project_path}/Regions/{region.lower()}/{park}'))
-        files = os.listdir(folder_path)
         try:
+            folder_path = str(Path(f'{project_path}/Regions/{region.lower()}/{park}'))
+            files = os.listdir(folder_path)
             if not files:
                 await callback_query.message.answer(f'Схемы в разработке')
             for file in files:
