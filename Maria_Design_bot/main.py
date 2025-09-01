@@ -319,11 +319,11 @@ def write_square(message):
 		square = message.text
 		price = float()
 		if property_type == 'Дизайн-проект под ключ':
-			price = 2500
+			price = 3000
 		elif (property_type == 'Дизайн-проект') or (property_type == 'express_project' and float(square) <=5):
-			price = 2000
+			price = 2500
 		elif property_type == 'Экспресс проект' and float(square) >5:
-			price = 1800
+			price = 2200
 		try:
 			calc = float(square) * price
 			calc_result = '{0:,}'.format(calc).replace(',', ' ')
