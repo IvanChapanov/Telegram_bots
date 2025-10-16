@@ -83,7 +83,7 @@ def fetch_new_contact():
 		port=db_config['port']
 	)
 	cursor = conn.cursor()
-	cursor.execute('SELECT first_name as "Имя", last_name as "Фамилия", phone_number as "Номер телефона", date as "Дата запроса", reason as "Цель запроса" FROM dbo.users WHERE checked IS NULL AND phone_number IS NOT NULL')
+	cursor.execute('SELECT first_name as "Имя", last_name as "Фамилия", phone_number as "Номер телефона", datetime as "Дата запроса", reason as "Цель запроса" FROM dbo.users WHERE checked IS NULL AND phone_number IS NOT NULL')
 	rows = cursor.fetchall()
 	column_names = [desc[0] for desc in cursor.description]
 	return rows, column_names
