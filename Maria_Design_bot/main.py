@@ -12,6 +12,9 @@ from typing import cast
 import psycopg2
 from zoneinfo import ZoneInfo
 from psycopg2 import sql
+from telebot.handler_backends import State, StatesGroup
+
+
 
 bot = telebot.TeleBot(TOKEN)
 target_user_id = 178945372
@@ -20,6 +23,9 @@ folder_path = None
 square = None
 project_path = Path(__file__).parent
 
+class UserStates(StatesGroup):
+	waiting_contact = State()
+	waiting_contact_guide = State()
 
 user_data = {}
 contact_state = {}
@@ -62,7 +68,7 @@ def check_db_connection():
 # 									f'datetime datetime)'
 # 			   )
 
-def insert_user_data(message):
+def insert_user_data(message, reason):
 	conn = psycopg2.connect(
 		dbname=db_config['dbname'],
 		user=db_config['user'],
@@ -77,8 +83,9 @@ def insert_user_data(message):
 	user_iter = iter(user_data.keys())
 	user_id = next(user_iter)
 	user = user_data[user_id]
-	sql = 'INSERT INTO dbo.users (user_id, first_name, user_name, square, datetime) VALUES (%s, %s, %s, %s ,%s)'
-	val = (user_id, user.first_name, user.user_name, user.square, user.date)
+	user_id = message.from_user.id
+	sql = 'INSERT INTO dbo.users (user_id, first_name, user_name, square, datetime, reason) VALUES (%s, %s, %s, %s ,%s, %s)'
+	val = (user_id, user.first_name, user.user_name, user.square, user.date, reason)
 	cursor.execute(sql, val)
 	conn.commit()
 	user_data.clear()
@@ -106,6 +113,8 @@ def start_message(message):
 	calc_btn = types.KeyboardButton('💸 Индивидуальный рассчет')
 	descr_btn = types.KeyboardButton('📋 Описание услуг')
 	markup.row(calc_btn, descr_btn)
+	guide_btn = types.KeyboardButton('🧭 Гайд по ремонту')
+	markup.row(guide_btn)
 	main_photo = Path(f'{project_path}/Main_photo/Maria_main_photo.jpg')
 	with open ('Text/Greeting.txt', 'r', encoding='utf-8') as file:
 		lines = file.readlines()
@@ -120,8 +129,28 @@ def menu_message(message):
 	calc_btn = types.KeyboardButton('💸 Индивидуальный рассчет')
 	descr_btn = types.KeyboardButton('📋 Описание услуг')
 	markup.row(calc_btn, descr_btn)
+	guide_btn = types.KeyboardButton('🧭 Гайд по ремонту')
+	markup.row(guide_btn)
 	bot.send_message(message.chat.id, 'Главное меню',
 	 					 reply_markup=markup)
+
+def menu_message_from_guide(message):
+	user_data[message.from_user.id] = User(message.from_user.first_name)
+	insert_reason = 'Скачали гайд, без контакта'
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+	info_btn = types.KeyboardButton('🖌️ О студии')
+	markup.row(info_btn)
+	calc_btn = types.KeyboardButton('💸 Индивидуальный рассчет')
+	descr_btn = types.KeyboardButton('📋 Описание услуг')
+	markup.row(calc_btn, descr_btn)
+	guide_btn = types.KeyboardButton('🧭 Гайд по ремонту')
+	markup.row(guide_btn)
+	bot.send_message(message.chat.id, f'Благодарим Вас, отправляем файл-гайд по ремонту с полезными ссылками внутри🤗',
+	 					 reply_markup=markup)
+	guide_file = Path(f'{project_path}/Files/Гайд по ремонту.pdf')
+	bot.send_document(message.chat.id, document=open(guide_file, 'rb'))
+	insert_user_data(message, insert_reason)
+
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -142,8 +171,26 @@ def ask_for_contact(message):
 	elif isinstance(message,types.CallbackQuery):
 		bot.send_message(message.message.chat.id, message_text
 						 ,reply_markup=keyboard)
+	bot.set_state(message.from_user.id, UserStates.waiting_contact, message.chat.id)
 
-def insert_contact(message):
+def ask_for_contact_guide(message):
+	# Создаем кнопку для запроса контакта
+	keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+	button_contact = types.KeyboardButton(text="💬 Поделиться контактом и получить гайд", request_contact=True)
+	button_menu = types.KeyboardButton(text="🏠 Вернуться в меню и получить гайд")
+	keyboard.add(button_contact,button_menu)
+	message_text = (f'Чтобы получить гайд с промокодами на скидки, поделитесь, пожалуйста, вашими контактыми данными.\n\n'
+					f'Предоставляя контакты вы даете согласие на обработку своих персональных данных')
+	# Отправляем сообщение с кнопкой
+	if isinstance(message,types.Message):
+		bot.send_message(message.chat.id, message_text
+						 ,reply_markup=keyboard)
+	elif isinstance(message,types.CallbackQuery):
+		bot.send_message(message.message.chat.id, message_text
+						 ,reply_markup=keyboard)
+	bot.set_state(message.from_user.id, UserStates.waiting_contact_guide, message.chat.id)
+
+def insert_contact(message,reason):
 	# Установка часового пояса Екатеринбурга (UTC+5)
 	tz_ekb = ZoneInfo('Asia/Yekaterinburg')
 	date = datetime.datetime.now(tz_ekb)
@@ -159,9 +206,9 @@ def insert_contact(message):
 	phone_number = contact.phone_number
 	first_name = contact.first_name
 	last_name = contact.last_name if contact.last_name else ""
-	sql_query = "INSERT INTO dbo.contacts (phone_number, first_name, last_name, date) VALUES (%s, %s, %s, %s)"
-	val = (phone_number, first_name, last_name, date)
-
+	date = datetime.datetime.now()
+	sql_query = f"INSERT INTO dbo.users (phone_number, first_name, last_name, datetime, reason) VALUES (%s, %s, %s, %s, %s)"
+	val = (phone_number, first_name, last_name, date, reason)
 	cursor.execute(sql_query, val)
 	conn.commit()
 
@@ -172,16 +219,34 @@ def insert_contact(message):
 
 @bot.message_handler(content_types=['contact'])
 def handle_contact(message):
-	# print (type(message.contact.user_id))
-	while message.contact is not None:
-		try:
-			insert_contact(message)
-			bot.send_message(message.chat.id, f'Спасибо, мы свяжемся с Вами в ближайшее время🤗',)
-			menu_message(message)
-			message.contact = None
-			break
-		except Exception as e:
-			pass
+		with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+			current_state = bot.get_state(message.from_user.id, message.chat.id)
+		if current_state == UserStates.waiting_contact.name:
+			while message.contact is not None:
+				try:
+					reason_insert = 'Просьба связаться'
+					insert_contact(message, reason_insert)
+					bot.send_message(message.chat.id, f'Спасибо, мы свяжемся с Вами в ближайшее время🤗')
+					menu_message(message)
+					message.contact = None
+					break
+				except Exception as e:
+					pass
+
+		elif current_state == UserStates.waiting_contact_guide.name:
+			while message.contact is not None:
+				try:
+					reason_insert = 'Скачали гайд, оставили контакт'
+					insert_contact(message, reason_insert)
+					bot.send_message(message.chat.id, f'Благодарим Вас, отправляем файл-гайд по ремонту с полезными ссылками внутри🤗')
+					guide_file = Path(f'{project_path}/Files/Гайд по ремонту.pdf')
+					bot.send_document(message.chat.id, document=open(guide_file, 'rb'))
+					menu_message(message)
+					message.contact = None
+					bot.delete_state(message.from_user.id, message.chat.id)
+					break
+				except Exception as e:
+					pass
 
 @bot.message_handler(content_types=['text'])
 def on_click(message):
@@ -193,6 +258,12 @@ def on_click(message):
 		personal_calc(message)
 	elif message.text.lower() == '🏠 вернуться в меню':
 		menu_message(message)
+	elif message.text.lower() == '🏠 вернуться в меню и получить гайд':
+		menu_message_from_guide(message)
+	elif message.text.lower() == '🧭 гайд по ремонту':
+		ask_for_contact_guide(message)
+
+
 
 def service_description(message):
 	descr_photo_dir = Path(f'{project_path}/description_photo')
@@ -325,6 +396,7 @@ def write_square(message):
 		elif property_type == 'Экспресс проект' and float(square) >5:
 			price = 2200
 		try:
+			insert_reason = 'Индивидуальный расчет'
 			calc = float(square) * price
 			calc_result = '{0:,}'.format(calc).replace(',', ' ')
 			period = int(0)
@@ -340,7 +412,7 @@ def write_square(message):
 					    f'💸 Общая стоимость услуг - {str(calc_result)} рублей\n'
 					    f'📅 Срок выполнения - {int(period)} рабочих дней')
 			bot.send_message(message.chat.id, message_calc)
-			insert_user_data(message)
+			insert_user_data(message,insert_reason)
 			ask_for_contact(message)
 			handle_contact(message)
 			# message.contact = None

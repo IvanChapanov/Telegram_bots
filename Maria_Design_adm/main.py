@@ -83,7 +83,7 @@ def fetch_new_contact():
 		port=db_config['port']
 	)
 	cursor = conn.cursor()
-	cursor.execute('SELECT first_name as "Имя", last_name as "Фамилия", phone_number as "Номер телефона", date as "Дата запроса" FROM dbo.contacts WHERE checked IS NULL')
+	cursor.execute('SELECT first_name as "Имя", last_name as "Фамилия", phone_number as "Номер телефона", date as "Дата запроса", reason as "Цель запроса" FROM dbo.users WHERE checked IS NULL AND phone_number IS NOT NULL')
 	rows = cursor.fetchall()
 	column_names = [desc[0] for desc in cursor.description]
 	return rows, column_names
@@ -97,7 +97,7 @@ def contact_status_update():
 		port=db_config['port']
 	)
 	cursor = conn.cursor()
-	cursor.execute('UPDATE dbo.contacts SET checked = 1 WHERE checked IS NULL')
+	cursor.execute('UPDATE dbo.users SET checked = 1 WHERE checked IS NULL AND phone_number IS NOT NULL')
 	conn.commit()
 
 def format_contact_row(row, column_names):
